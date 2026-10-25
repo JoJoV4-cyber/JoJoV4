@@ -1,8 +1,8 @@
 
 --[[
-    JOJOv4 - Fruit Finder
-    Busca automatica e diagnostico de objetos
-    Inicio automatico ao executar
+    JOJOv4 | Blox Fruits Finder
+    Auto Start + Auto Find
+    Lista de frutas lendarias e miticas
 ]]
 
 local Players = game:GetService("Players")
@@ -20,25 +20,54 @@ local CONFIG = {
     ScanInterval = 15,
     Notify = true,
 
+    -- Nomes atuais e antigos para compatibilidade.
     FruitNames = {
-        "Mammoth", "Buddha", "Dough",
-        "Leopard", "Venom", "Dragon",
-        "Gravity", "Rumble", "T-Rex",
-        "Control", "Spirit", "Gas",
-        "Shadow", "Kitsune"
+        -- Lendarias
+        "Quake",
+        "Buddha",
+        "Love",
+        "Creation",
+        "Spider",
+        "Sound",
+        "Phoenix",
+        "Portal",
+        "Lightning",
+        "Rumble",
+        "Pain",
+        "Paw",
+        "Blizzard",
+
+        -- Miticas
+        "Dragon",
+        "Kitsune",
+        "Yeti",
+        "Leopard",
+        "Tiger",
+        "Gas",
+        "Dough",
+        "Spirit",
+        "Soul",
+        "Control",
+        "Venom",
+        "Shadow",
+        "Gravity",
+        "Mammoth",
+        "T-Rex",
+        "Magnet",
+        "Meme"
     }
 }
 
+-- Remover interface anterior
 local playerGui = player:WaitForChild("PlayerGui")
-
 local oldGui = playerGui:FindFirstChild("JOJOv4")
+
 if oldGui then
     oldGui:Destroy()
 end
 
 local running = true
 local scanning = false
-local autoScan = CONFIG.AutoScan
 local results = {}
 
 -- Interface
@@ -49,7 +78,7 @@ gui.Parent = playerGui
 
 local frame = Instance.new("Frame")
 frame.Name = "Main"
-frame.Size = UDim2.fromOffset(300, 270)
+frame.Size = UDim2.fromOffset(300, 245)
 frame.Position = UDim2.new(0.5, -150, 0.25, 0)
 frame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 frame.Parent = gui
@@ -59,7 +88,7 @@ corner.CornerRadius = UDim.new(0, 10)
 corner.Parent = frame
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 42)
+title.Size = UDim2.new(1, 0, 0, 40)
 title.BackgroundColor3 = Color3.fromRGB(105, 65, 200)
 title.Text = "JOJOv4 | FRUIT FINDER"
 title.TextColor3 = Color3.new(1, 1, 1)
@@ -67,31 +96,32 @@ title.TextScaled = true
 title.Parent = frame
 
 local status = Instance.new("TextLabel")
-status.Position = UDim2.fromOffset(10, 48)
-status.Size = UDim2.new(1, -20, 0, 42)
+status.Position = UDim2.fromOffset(10, 45)
+status.Size = UDim2.new(1, -20, 0, 55)
 status.BackgroundTransparency = 1
-status.Text = "Iniciando busca..."
+status.Text = "Iniciando busca automatica..."
 status.TextColor3 = Color3.new(1, 1, 1)
+status.TextWrapped = true
 status.TextScaled = true
 status.Parent = frame
 
-local resultsLabel = Instance.new("TextLabel")
-resultsLabel.Position = UDim2.fromOffset(10, 92)
-resultsLabel.Size = UDim2.new(1, -20, 0, 66)
-resultsLabel.BackgroundColor3 = Color3.fromRGB(38, 38, 52)
-resultsLabel.TextColor3 = Color3.new(1, 1, 1)
-resultsLabel.Text = "Aguardando resultados..."
-resultsLabel.TextWrapped = true
-resultsLabel.TextScaled = true
-resultsLabel.Parent = frame
+local resultLabel = Instance.new("TextLabel")
+resultLabel.Position = UDim2.fromOffset(10, 102)
+resultLabel.Size = UDim2.new(1, -20, 0, 70)
+resultLabel.BackgroundColor3 = Color3.fromRGB(38, 38, 52)
+resultLabel.TextColor3 = Color3.new(1, 1, 1)
+resultLabel.Text = "Aguardando resultados..."
+resultLabel.TextWrapped = true
+resultLabel.TextScaled = true
+resultLabel.Parent = frame
 
-local function makeButton(label, y)
+local function makeButton(text, y)
     local button = Instance.new("TextButton")
     button.Position = UDim2.fromOffset(10, y)
-    button.Size = UDim2.new(1, -20, 0, 34)
+    button.Size = UDim2.new(1, -20, 0, 30)
     button.BackgroundColor3 = Color3.fromRGB(65, 55, 95)
     button.TextColor3 = Color3.new(1, 1, 1)
-    button.Text = label
+    button.Text = text
     button.TextScaled = true
     button.Parent = frame
 
@@ -102,9 +132,8 @@ local function makeButton(label, y)
     return button
 end
 
-local scanButton = makeButton("Procurar agora", 164)
-local autoButton = makeButton("Auto Scan: LIGADO", 202)
-local closeButton = makeButton("Fechar", 240)
+local scanButton = makeButton("Procurar agora", 178)
+local closeButton = makeButton("Fechar", 212)
 
 local function notify(message)
     if not CONFIG.Notify then
@@ -115,7 +144,7 @@ local function notify(message)
         StarterGui:SetCore("SendNotification", {
             Title = "JOJOv4",
             Text = message,
-            Duration = 4
+            Duration = 3
         })
     end)
 end
@@ -148,10 +177,10 @@ local function findCandidates()
         end
 
         if obj:IsA("Model") or obj:IsA("BasePart") then
-            local name = obj.Name:lower()
+            local objectName = obj.Name:lower()
 
             for _, fruitName in ipairs(CONFIG.FruitNames) do
-                if name:find(fruitName:lower(), 1, true) then
+                if objectName:find(fruitName:lower(), 1, true) then
                     if not seen[obj] then
                         seen[obj] = true
                         table.insert(found, obj)
@@ -171,7 +200,7 @@ local function scan()
     end
 
     scanning = true
-    status.Text = "Procurando objetos..."
+    status.Text = "Procurando objetos candidatos..."
 
     local ok, data = pcall(findCandidates)
 
@@ -179,20 +208,21 @@ local function scan()
         results = data
 
         if #results == 0 then
-            resultsLabel.Text = "Nenhum candidato encontrado."
             status.Text = "Busca concluida."
+            resultLabel.Text = "Nenhum candidato encontrado."
         else
             local lines = {}
 
             for i, obj in ipairs(results) do
-                if i > 3 then
+                if i > 4 then
                     break
                 end
 
                 local pos = getPosition(obj)
+
                 if pos then
                     table.insert(lines, string.format(
-                        "%s: %.0f, %.0f, %.0f",
+                        "%s (%.0f, %.0f, %.0f)",
                         obj.Name, pos.X, pos.Y, pos.Z
                     ))
                 else
@@ -200,14 +230,13 @@ local function scan()
                 end
             end
 
-            resultsLabel.Text = table.concat(lines, "\n")
-            status.Text = "Candidatos: " .. #results
-            notify("Busca concluida: " .. #results ..
-                " objeto(s) candidato(s)")
+            status.Text = "Candidatos encontrados: " .. #results
+            resultLabel.Text = table.concat(lines, "\n")
+            notify("Candidatos encontrados: " .. #results)
         end
     else
-        status.Text = "Erro; nova tentativa depois."
-        warn("[JOJOv4] Erro durante a busca:", data)
+        status.Text = "Erro na busca; tentando novamente."
+        warn("[JOJOv4] Erro:", data)
     end
 
     scanning = false
@@ -217,37 +246,19 @@ scanButton.MouseButton1Click:Connect(function()
     task.spawn(scan)
 end)
 
-autoButton.MouseButton1Click:Connect(function()
-    autoScan = not autoScan
-    autoButton.Text = autoScan
-        and "Auto Scan: LIGADO"
-        or "Auto Scan: DESLIGADO"
-
-    status.Text = autoScan
-        and "Busca automatica ativada."
-        or "Busca automatica pausada."
-end)
-
 closeButton.MouseButton1Click:Connect(function()
     running = false
     gui:Destroy()
 end)
 
--- Comeca sozinho, sem exigir clique
+-- Auto Start: comeca sem clicar
 task.spawn(function()
     task.wait(1)
 
     while running and gui.Parent do
-        if autoScan then
-            local ok, err = pcall(scan)
-
-            if not ok then
-                warn("[JOJOv4] Falha inesperada:", err)
-            end
-        end
-
+        scan()
         task.wait(CONFIG.ScanInterval)
     end
 end)
 
-print("[JOJOv4] Carregado; busca automatica iniciada.")
+print("[JOJOv4] Carregado. Busca automatica iniciada.")
